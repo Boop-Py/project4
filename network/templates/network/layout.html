@@ -1,0 +1,43 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>{% block title %}Social Network{% endblock %}</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" integrity="sha512-8bHTC73gkZ7rZ7vpqUQThUDhqcNFyYi2xgDgPDHc+GXVGHXq+xPjynxIopALmOPqzo9JZj0k6OqqewdGO3EsrQ==" crossorigin="anonymous" />
+        <link href="{% static 'network/styles.css' %}" rel="stylesheet">
+    </head>
+
+<body>
+    <div class="ui teal inverted stackable menu">
+        <div class="item">
+            <h4>Stronk</h4>
+        </div>
+        {% if user.is_authenticated %}
+            <a class="item" href="{% url 'stronk:index' %}">All Posts</a>
+            <a class="item" href="{% url 'stronk:following' %}">Following</a>
+        <div class="right menu">
+            <a class="item" href="#"><strong>{{ user.username }}</strong></a>
+            <a class="item" href="{% url 'stronk:logout' %}">Log Out</a>
+        </div>
+        {% else %}
+        <div class="right menu">
+            <a class="item" href="{% url 'stronk:register' %}">Register</a>                
+            <a class="item" href="{% url 'stronk:login' %}">Login</a> 
+        </div>    
+        {% endif %}          
+    </div>
+    <div class="ui container">    
+        {% if messages %}
+        <div class="ui message">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+        </div>   
+    {% endif %}
+    </div>
+    {% block body %}
+    {% endblock %}
+</body>
+
+</html>
