@@ -11,7 +11,6 @@ class Post(models.Model):
     liked_by = models.ManyToManyField('User', default=None, blank=True, related_name='post_likes')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="creator")
 
-class Profile(models.Model):
+class Follow(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    followed_by = models.ManyToManyField(User, blank=True, related_name="followed_by_user")
-    following = models.ManyToManyField(User, blank=True, related_name="following_the_user")
+    following = models.IntegerField(User, blank=True, null=True)

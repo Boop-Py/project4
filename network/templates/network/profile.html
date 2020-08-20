@@ -1,7 +1,17 @@
-{% extends "network/layout.html" %}
+{% extends "network/layout.html" %}
+    {% block body %}
+    
+    <div class="ui container">
+        {% if name_error %}
+            <h1>User not found</h1>
+        {% endif %}      
+        <h1>Profile of: {{ user_target.username }}</h1>
 
-{% block body %}
+    </div>
+    
 
-{{ post }}
+    <button class="ui primary button" type="submit" value="Follow">Follow!</button>
+    <button class="ui negative button" type="submit" value="Unfollow">Unfollow!</button>
 
-{% endblock %}
+    
+    {% endblock %}>

@@ -15,7 +15,7 @@
         </div>
         {% if user.is_authenticated %}
             <a class="item" href="{% url 'stronk:index' %}">All Posts</a>
-            <a class="item" href="{% url 'stronk:following' %}">Following</a>
+            <a class="item" href="{% url 'stronk:following_list' %}">Following</a>
         <div class="right menu">
             <a class="item" href="#"><strong>{{ user.username }}</strong></a>
             <a class="item" href="{% url 'stronk:logout' %}">Log Out</a>

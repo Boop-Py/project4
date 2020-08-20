@@ -1,26 +1,45 @@
 {% extends "network/layout.html" %}
 
 {% block body %}
-<div class="ui large feed">
-    <div class="event">
-        <div class="label">
-            <i class="user icon"></i>
+<div class="ui container">
+    <form class="ui form" action="{% url 'stronk:create_post' %}" method="post">
+        <div class="field">
+            <label>Your post here:</label>
+            <textarea name="content_input"></textarea>
+            {% csrf_token %}
         </div>
-        <div class="content">
-            <div class="summary">
-                <a class="user">
-                    Elliot Fu
-                </a> added you as a friend
-                <div class="date">
-                    1 Hour Ago
+        <div>
+            <button class="ui primary submit labeled icon button" type="submit">
+            <i class="icon edit"></i> Add Post
+        </div>
+    </form>
+    <div class="ui large feed">
+        {% for p in posts %} 
+        <div class="event">
+            <div class="label">
+                <i class="user icon"></i>
+            </div>
+            <div class="content">
+                <div class="summary">
+                    <a class="user" href="{% url 'stronk:profile' p.user %}">
+                        {{ p.user }}
+                    </a> 
+                    <div class="text">
+                        <p>{{ p.content }}</p>
+                    </div>
+                    <div class="metadata">
+                        <span class="date">{{ p.post_time }}</span>
+                    </div>
+                </div>
+                <div class="meta">
+                    <a class="like">
+                        <i class="like icon"></i> {{ p.liked_by.count }}
+                    </a>
                 </div>
             </div>
-            <div class="meta">
-                <a class="like">
-                    <i class="like icon"></i> 4 Likes
-                </a>
-            </div>
         </div>
+        {% endfor %}
     </div>
-</div>
+    </div>
+
 {% endblock %}
