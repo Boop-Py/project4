@@ -2,16 +2,28 @@
     {% block body %}
     
     <div class="ui container">
-        {% if name_error %}
-            <h1>User not found</h1>
-        {% endif %}      
-        <h1>Profile of: {{ user_target.username }}</h1>
+    
+        <h1>Profile of: {{ user_target.username }}</h1> 
+
+        <div class="ui two bottom attached buttons">
+            <a class="ui green button" href="{% url 'stronk:follow' user_target.username %}">
+                <i class="plus icon"></i>Follow this person!
+            </a>
+            <a class="ui red button" href="{% url 'stronk:unfollow' user_target.username %}">
+                <i class="minus icon"></i>Unfollow this person!
+            </a>
+        </div>
+        <div>
+            <p>Followers:</p>
+        </div>
+        <div>
+            <p>Following:</p>
+        </div>
+        <div>
+            <p>Posts:</p>
+        </div>
+
+
 
     </div>
-    
-
-    <button class="ui primary button" type="submit" value="Follow">Follow!</button>
-    <button class="ui negative button" type="submit" value="Unfollow">Unfollow!</button>
-
-    
     {% endblock %}>

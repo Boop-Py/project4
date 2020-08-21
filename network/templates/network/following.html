@@ -1,5 +1,8 @@
 {% extends "network/layout.html" %}
-
 {% block body %}
+
+{% for followed in follow_list %}
+{{ followed }}
+{% endfor %}
 
 {% endblock %}

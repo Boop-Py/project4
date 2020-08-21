@@ -11,8 +11,10 @@ urlpatterns = [
     path("logout", views.logout_view, name="logout"),
     path("register", views.register, name="register"),
     path("following_list", views.following_list, name="following_list"),
-    path("follow_action", views.follow_action, name="follow_action"),
     path("todolist", views.todolist, name="todolist"),
     path("create_post", views.create_post, name="create_post"),
+    path("follow/<str:username>", views.follow, name="follow"),
+    path("unfollow/<str:username>", views.unfollow, name="unfollow"),
     path("profile/<str:username>", views.profile, name="profile")
+    
 ]
