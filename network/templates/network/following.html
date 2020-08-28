@@ -1,8 +1,32 @@
 {% extends "network/layout.html" %}
 {% block body %}
-
-{% for followed in follow_list %}
-{{ followed }}
-{% endfor %}
-
+<div class="ui container">
+    <div class="ui large feed">
+        {% for p in posts %} 
+        <div class="event">
+            <div class="label">
+                <i class="user icon"></i>
+            </div>
+            <div class="content">
+                <div class="summary">
+                    <a class="user" href="{% url 'stronk:profile' p.user %}">
+                        {{ p.user }}
+                    </a> 
+                    <div class="text">
+                        <p>{{ p.content }}</p>
+                    </div>
+                    <div class="metadata">
+                        <span class="date">{{ p.post_time }}</span>
+                    </div>
+                </div>
+                <div class="meta">
+                    <a class="like">
+                        <i class="like icon"></i> {{ p.liked_by.count }}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}
