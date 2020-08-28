@@ -92,19 +92,24 @@ def following_list(request):
     # retrieve current user
     current_user = request.user 
     
+    current_user_object = User.objects.get(username=current_user)
+    
     # all people person is following
     followed = Follow.objects.filter(user=current_user)
-    followed = followed.user
+
     followed_count = followed.count()
     print(f"Following: {followed_count} people")
     print(followed)
     posts = []
-    for follow in followed:    
-        all_posts = Post.objects.all().filter(user=followed).order_by("id").reverse()
-        for post in all_posts:
-            posts.append.post
+    #for follow in followed:
+    
+    follow_users = [4,2,6] # DO NOT GIVE ME USER OBJECTS - DO A TYPE INPSECTION!
+    
+    all_posts = Post.objects.all().filter(user_id__in=follow_users).order_by("id").reverse()
+    for post in all_posts:
+        posts.append(post)
     # all posts by those people
-        print(f"{posts.count} posts by: {followers.count} users")
+    print(f"{posts.count} posts by: {followed.count} users")
     
     return render(request, "network/following.html", {
                     "posts": posts
