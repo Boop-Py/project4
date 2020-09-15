@@ -1,0 +1,16 @@
+{% if user.is_authenticated %}
+<div class="ui form">
+    <div class="field">
+        <form action="{% url 'create' %}" method="post">
+            {% csrf_token %}
+            <div class="field">
+                <label for="post_text" class="ui label">Create a post!</label>
+                {{ form.post_text }}
+            </div>
+            <div>
+                <button type="submit" class="ui orange button">Post</button>
+            </div>
+        </form>
+    </div>
+</div>
+{%endif%}

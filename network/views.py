@@ -1,228 +1,202 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse, HttpResponseBadRequest
 from django.shortcuts import render
 from django.urls import reverse
-from django.core.paginator import Paginator
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
-from django.views.decorators.csrf import csrf_exempt
+from network.models import User, Post, Follower, Like
 from django import forms
+from django.db.models import OuterRef, Subquery, Count, Exists
+from django.views.generic import ListView
+from django.core.paginator import Paginator
+import time
 
-from .models import User, Post, Follow
+MAX_POSTS_PER_PAGE = 10
 
-class Edit_Form(forms.Form):
+## TODO
+# click folo button does nothing
+
+
+class Create_Post_Form(forms.Form):
+    post_text = forms.Field(widget=forms.Textarea(
+                            {"rows": "3", 
+                            "maxlength": 160, 
+                            "class": "field", 
+                            "placeholder": "Write something..."}), 
+                            label="New Post", 
+                            required=True)
+
+class Edit_Post_Form(forms.Form):
     id_post_edit_text = forms.Field(widget=forms.Textarea(
-        {"rows": "3", "maxlength": 160, "class": "form-control", "placeholder": "What's happening?", "id": "id_post_edit_text"}), label="New Post", required=True)
+                                    {"rows": "3", 
+                                    "maxlength": 160, 
+                                    "class": "field", 
+                                    "placeholder": "Write something...", 
+                                    "id": "id_edit_text"}), 
+                                    label="New Post", 
+                                    required=True)
 
-## TODO 
-# change like function to JS
-
-# edit post - only if post creator
-## edit button should change area to textarea with content
-## save button
-## save using javascript
-
-
-@login_required(login_url="stronk:login")
 def index(request):
-    posts = Post.objects.all().order_by("id").reverse()
-    paginator = Paginator(posts, 10)
-    if request.GET.get("page") != None:
-        try:
-            posts = paginator.page(request.GET.get("page"))
-        except:
-            posts = paginator.page(1)
+    if request.user.is_authenticated:
+        user = request.session["_auth_user_id"]
+        likes = Like.objects.filter(post=OuterRef("id"), 
+                                    user_id=user)
+        posts = Post.objects.filter().order_by(
+                                "-post_date")
     else:
-        posts = paginator.page(1)
+        posts = Post.objects.order_by("-post_date").all()
+
+    paginator = Paginator(posts, MAX_POSTS_PER_PAGE)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
     return render(request, "network/index.html", {
-                    "posts": posts
-                    })
+                    "posts": page_obj,
+                    "form": Create_Post_Form(),
+                    "form_edit": Edit_Post_Form()
+    })
 
-@login_required(login_url="stronk:login")
-def create_post(request):
-    if request.method == "POST":
-        content = request.POST["content_input"]
-        user = request.user
-        Post.objects.create(
-            user = user, 
-            content = content)
-        return HttpResponseRedirect(reverse("stronk:index"))
+def following(request):
+    if request.user.is_authenticated:
+        user = request.session["_auth_user_id"]
+        followers = Follower.objects.filter(follower=user)
+        likes = Like.objects.filter(post=OuterRef("id"),
+                                    user_id=user)
+        posts = Post.objects.filter(user_id__in=followers.values("following_id")).order_by(
+                                    "-post_date")
     else:
-        return HttpResponseRedirect(reverse("stronk:index"))
+        return HttpResponseRedirect(reverse("login"))
 
-@login_required(login_url="stronk:login")
-def profile(request, username): 
-    try:
-        # fetch the user info      
-        user_target = User.objects.get(username=username)
-                      
-        # other people following this person
-        followers = Follow.objects.filter(user=user_target)
-        
-        # people this person follows
-        following = Follow.objects.filter(following=user_target)
-               
-        followers_count = followers.count()
-        following_count = following.count()
+    paginator = Paginator(posts, MAX_POSTS_PER_PAGE)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+    return render(request, "network/following.html", {
+                    "posts": page_obj
+    })
 
-        print(f"{user_target} follows: {followers_count}")
-        print(f"{user_target} is followed by {following_count}")
-        
-        # posts in reverse id order
-        posts = Post.objects.filter(user=user_target).order_by("id").reverse()
-        paginator = Paginator(posts, 10)
-        if request.GET.get("page") != None:
-            try:
-                posts = paginator.page(request.GET.get("page"))
-            except:
-                posts = paginator.page(1)
+def create(request):
+    if request.method == "POST":
+        form = Create_Post_Form(request.POST)
+        if form.is_valid():
+            user = User.objects.get(id=request.session["_auth_user_id"])
+            text = form.cleaned_data["post_text"]
+            post = Post(user=user, 
+                        text=text)
+            post.save()
+            return HttpResponseRedirect(reverse("index"))
+    else:
+        return HttpResponseRedirect(reverse("index"))
+
+def edit_post(request, id):
+    if request.is_ajax and request.method == "POST":
+        form = NewEditPostForm(request.POST)
+        if form.is_valid():
+            text = form.cleaned_data["id_edit_text"]
+            Post.objects.filter(
+                                id=id, 
+                                user_id=request.session["_auth_user_id"]).update(text=text)
+            return JsonResponse({"result": "ok", 
+                                "text b": text})
         else:
-            posts = paginator.page(1)
+            return JsonResponse({"error": form.errors}, 
+                                status=400)
 
+    return JsonResponse({"error": HttpResponseBadRequest("Bad Request: no like chosen")}, 
+                        status=400)
+
+def follow(request, id):
+    try:
+        result = "follow"
+        current_user = request.user
+        user = User.objects.get(username=current_user)      
+        target_user = User.objects.get(id=id)
+
+        # check follow exists. if doesn't exist, create it. 
+        follower = Follower.objects.get_or_create(
+                                    follower=user, 
+                                    following=target_user) 
+        print(f"{user} is now following {target_user}")                            
+        
+        # if exists, remove
+        if not follower[1]: 
+            Follower.objects.filter(follower=user, following=target_user).delete()
+            print("follow removed")
+            result = "unfollow"
+            
+        # count all the follows 
+        following_target = Follower.objects.filter(following=target_user)
+        all_likes_on_post = following_target.count()      
+        print(f"total likes on this post: {all_likes_on_post}")
+        
     except Exception as e:
         print(e)
-        # if no user return error
-        return render(request, "network/profile.html", {
-            "user_target": "exception error",
-            "message": "Unable to find user."
-            })
-
-    return render(request, "network/profile.html", {
-                    "user_target": user_target,
-                    "posts": posts,
-                    "following_count": following_count,
-                    "followers_count": followers_count                   
-                    })
-                     
-@login_required(login_url="stronk:login")
-def following_list(request):
-    # retrieve current user object
-    current_user = request.user 
-    current_user_object = User.objects.get(username=current_user)
-    
-    # retrieve all people that person is following
-    followed = Follow.objects.filter(user=current_user_object)  
-    
-    # all posts by those followed people   
-    posts = Post.objects.filter(user_id__in=followed.values("following_id")).order_by(
-            "-id")
-            
-    # paginate - 10 per page
-    paginator = Paginator(posts, 10)
-    if request.GET.get("page") != None:
-        try:
-            posts = paginator.page(request.GET.get("page"))
-        except:
-            posts = paginator.page(1)
-    else:
-        posts = paginator.page(1)
-    
-    return render(request, "network/following.html", {
-                    "posts": posts
-                    })
-
-@login_required(login_url="stronk:login")
-def follow(request, username):
-    try:   
-        # retrieve self user ID                
-        current_user = request.user
-        # retrieve the target user ID   
-        user_target = User.objects.get(username=username)       
-        # ensure user can't follow themselves 
-        if current_user == user_target:
-            return HttpResponseRedirect("/stronk/profile/" + username, {
-                                        "message": "You can't follow yourself!."
-                                        })
-                                        
-        else:
-            # check if follow entry already exists
-            follow_exists = Follow.objects.filter(user=current_user, following=user_target).count()    
-            
-            # if already following present error
-            if follow_exists > 0:
-                return HttpResponseRedirect("/stronk/profile/" + username, {
-                                            "message": "You are already following this user."
-                                            })    
-                                            
-            # if not following, save the follow
-            else:
-                Follow.objects.create(
-                    user = current_user, 
-                    following = user_target)   
-                # show success message
-                return HttpResponseRedirect("/stronk/profile/" + username, {
-                                            "message": "You are now following this user!"
-                                            })
-            
-    except Exception as e: 
-        print(e)
-        return HttpResponseRedirect("/stronk/profile/" + username, {
-                                        "message": "An error occured."
-                                        })
-
-    return HttpResponseRedirect("/stronk/profile/" + username)
-
-@login_required(login_url="stronk:login")
-def unfollow(request, username):
-    try:  
-        # retrieve self user ID               
-        current_user = request.user
-
-        # retrieve the target user ID   
-        user_target = User.objects.get(username=username)
-
-        # check if follow entry already exists
-        follow_exists = Follow.objects.filter(user=current_user, following=user_target).count()       
-        # if not following, display error message 
-        if follow_exists == 0:
-            return HttpResponseRedirect("/stronk/profile/" + username, {
-                                        "message": "You are not following this user."
-                                        })
-
-        # if following, remove object
-        else: 
-            Follow.objects.filter(user=current_user, following=user_target).delete()
-            return HttpResponseRedirect("/stronk/profile/" + username)
-    
-    except Exception as e: 
-        print(e)
-        return HttpResponseRedirect("/stronk/profile/" + username, {
-                                        "message": "An error occured."
-                                        })
-
-    return HttpResponseRedirect("/stronk/profile/" + username)
+        return HttpResponseBadRequest("Bad Request: Unable to follow")
+        
+    return JsonResponse({
+                    "result": result, 
+                    "total_likes": all_likes_on_post
+    })
 
 def like(request, id):
-    if request.method == "GET":
-        # get name of current user
+    try:
         current_user = request.user
-        
-        # get post id 
-        post_id = id
+        user = User.objects.get(username=current_user)
+        post = Post.objects.get(id=id)
 
-        # retrieve obj of the post that's been targeted
-        post_target = Post.objects.get(pk=post_id)
+        # check like exists. if doesn't exist, create it. 
+        like = Like.objects.get_or_create(user=user, post=post)
+        print("like added")
         
-        # check if user already likes post 
-        user_likes_post = Post.objects.filter(pk=post_id, liked_by=current_user.id).count()
-        print(user_likes_post)
+        # if exists, remove
+        if not like[1]: 
+            Like.objects.filter(user=user, post=post).delete()
+            print("like deleted")
+               
+        # count all the likes       
+        likes_on_post = Like.objects.filter(post=post)
+        all_likes_on_post = likes_on_post.count()      
+        print(f"total likes on this post: {all_likes_on_post}")
         
-        # create like if none exists
-        if user_likes_post == 0:       
-            post = Post.objects.filter(id=id).first()
-            post_target.liked_by.add(current_user)
-            
-        # remove like if already exists
-        elif user_likes_post == 1: 
-            post_target.liked_by.remove(current_user)
-        else: 
-            print("error")
-            return HttpResponseRedirect(reverse("stronk:index"))     
-        return HttpResponseRedirect(reverse("stronk:index"))
-     
-    else: 
-        return HttpResponseRedirect(reverse("stronk:index"))
+    except Exception as e:
+        print(e)
+        return HttpResponseBadRequest("Bad Request: Error liking this post")
+        
+    return JsonResponse({
+                    "like": id, 
+                    "total_likes": all_likes_on_post
+    })
+
+def profile(request, username):
+    is_following = 0
+    profile_user = User.objects.get(username=username)
+    if request.user.is_authenticated:
+        logged_user = request.session["_auth_user_id"]
+        is_following = Follower.objects.filter(
+                                follower = logged_user, 
+                                following = profile_user).count()
+        likes = Like.objects.filter(post = OuterRef("id"), 
+                                user_id = logged_user)
+        posts = Post.objects.filter(user = profile_user).order_by(
+                                    "post_date")
+    else:
+        posts = Post.objects.filter(
+            user=profile_user).order_by("post_date").all()
+    
+    total_following = Follower.objects.filter(
+        follower=profile_user).count()
+    total_followers = Follower.objects.filter(
+        following=profile_user).count()
+
+    paginator = Paginator(posts, MAX_POSTS_PER_PAGE)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+    return render(request, "network/profile.html", {
+                    "profile_user": profile_user, 
+                    "posts": page_obj, 
+                    "is_following": is_following, 
+                    "total_following": total_following, 
+                    "total_followers": total_followers, 
+                    "form": Create_Post_Form(), 
+                    "form_edit": Edit_Post_Form()
+    })
 
 def todolist(request):
     return render(request, "network/todolist.html")
@@ -238,7 +212,7 @@ def login_view(request):
         # Check if authentication successful
         if user is not None:
             login(request, user)
-            return HttpResponseRedirect(reverse("stronk:index"))
+            return HttpResponseRedirect(reverse("index"))
         else:
             return render(request, "network/login.html", {
                 "message": "Invalid username and/or password."
@@ -248,7 +222,7 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
-    return HttpResponseRedirect(reverse("stronk:index"))
+    return HttpResponseRedirect(reverse("index"))
 
 def register(request):
     if request.method == "POST":
@@ -269,21 +243,9 @@ def register(request):
             user.save()
         except IntegrityError:
             return render(request, "network/register.html", {
-                "message": "Username already taken."
+                            "message": "Username already taken."
             })
         login(request, user)
-        return HttpResponseRedirect(reverse("stronk:index"))
+        return HttpResponseRedirect(reverse("index"))
     else:
         return render(request, "network/register.html")
-
-def edit_post(request, id):
-    if request.method == "POST":
-        form = Edit_Form(request.POST)
-        if form.is_valid(): 
-            text = form.cleaned_data["id_post_edit_text"]
-            Post.objects.filter(
-                id=id, user_id=request.session["_auth_user_id"]).update(text=text)
-            return HttpResponseRedirect(reverse("index"))
-        else: 
-            return HttpResponseRedirect(reverse("index"))
-    return HttpResponseRedirect(reverse("index"))

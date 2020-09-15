@@ -1,27 +1,26 @@
 {% extends "network/layout.html" %}
 
 {% block body %}
-<div class="ui container">
-    <h3 class="ui dividing header">Login</h3>
 
     {% if message %}
         <div>{{ message }}</div>
     {% endif %}
-
-    <form class="ui form" action="{% url 'stronk:login' %}" method="post">
-        {% csrf_token %}
-        <div class="field">
-            <label>Username</label>
-            <input autofocus type="text" name="username">
-        </div>
-        <div class="field">
-            <label>Password</label>
-            <input  type="password" name="password">
-        </div>  
-        <button class="ui button" type="submit">Submit</button>
-    </form>
-
-
-    Don't have an account? <a href="{% url 'stronk:register' %}">Register here.</a>
-</div>
+    
+    <div class="ui container">
+    <h2 class=""ui header>Login</h2>
+        <form class="ui form" action="{% url 'login' %}" method="post">
+            {% csrf_token %}
+            <div class="field">
+                <input autofocus type="text" name="username" placeholder="Username" required>
+            </div>
+            <div class="field">
+                <input type="password" name="password" placeholder="Password" required>
+            </div>
+            <input class="ui orange button" type="submit" value="Login">
+        </form>
+        
+        <div class="ui divider"></div>
+        
+        Don't have an account? <a href="{% url 'register' %}">Register here.</a>
+    </div>
 {% endblock %}

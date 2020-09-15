@@ -1,0 +1,8 @@
+.heart {
+    color: red !important;
+    cursor: pointer;
+}
+
+.hide {
+    display: none;
+}

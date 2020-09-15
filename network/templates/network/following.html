@@ -1,75 +1,42 @@
 {% extends "network/layout.html" %}
+
 {% block body %}
 <div class="ui container">
-    <div class="ui large feed">
-        {% for p in posts %} 
-        <div class="event">           
-            <div class="label">
-                <i class="user icon"></i>
+    <h1>Following</h1>
+
+    <div class="ui divider"></div>
+
+    <div id="ui large feed">
+        {% for post in posts %}
+        <div class="ui card">
+            <div class="event">
+                <a class="user" href="{% url 'profile' post.user.username %}">
+                {{ post.user.username }}</a>               
+                {% if post.user_id == user.id %}       
+                <a href="#" class="right floated ui icon orange basic button" id="edit_post{{ post.id }}" data-id="{{ post.id }}" data-toggle="modal"><i class="edit icon"></i></a>
+                {% endif %}              
+                <h4 class="extra text" id="post_text_{{ post.id }}">{{ post.text }}</h4>             
+                <form action="#" method="POST" id="frm_edit_{{ post.id }}" data-id="{{ post.id }}" style="display: none">
+                    {% csrf_token %}
+                    <div class="field">                
+                        {{ form_edit.id_post_edit_text }}
+                    </div>
+                    <div id="post_text_alert_{{ post.id }}"></div>
+                    <div id="div_buttons">
+                        <button class="ui icon green basic button" type="submit" id="save_button"><i class="save icon"></i></button>
+                        <button class="ui icon red basic button" type="button" data-id="{{ post.id }}" id="close_edit_form_button_{{ post.id }}" data-dismiss="modal"><i class="trash alternate icon"></i></button>             
+                    </div>
+                </form>
+                <p class="date">{{ post.post_date }}</p>         
+                <div class="like heart" data-id="{{ post.id }}">     
+                    <i class="like icon"></i>{{ post.like_set.count }}
+                </div> 
             </div>
-            <div class="content">
-                <div class="summary">
-                    <a class="user" href="{% url 'stronk:profile' p.user %}">
-                        <h3>{{ p.user }}</h3>
-                    </a> 
-                    <div class="text">
-                        <p>{{ p.content }}</p>
-                    </div>
-                    <div class="metadata">
-                        <span class="date">{{ p.post_time }}</span>
-                    </div>
-                </div>              
-                <div class="meta" id="{{ p.id }}">
-                    <a class="liked" href="{% url 'stronk:like' p.id %}">     
-                        <i class="like icon"></i>Liked by: {{ p.liked_by.count }}
-                    </a>                   
-                </div>
-            </div> 
-            {% if p.user_id == user.id %}
-            <div class="extra content">
-                <a href="#" class="ui left floated button" id="edit{{ post.id }}" data-id="{{ p.id }}">Edit</a>  
-            </div>       
-            {% endif %}               
-        </div>    
-        <div class="ui fitted divider"></div>
-        {% endfor %} 
-    </div>
-    <div>
-        <nav>
-            {% if posts.has_previous %}
-            <a class="page-link" href="?page={{ posts.previous_page_number }}">
-                <button class="ui left labeled icon button">
-                    <i class="left arrow icon"></i>
-                    Previous
-                </button>
-            </a>
-                
-            {% else %}
-            <a class="page-link" href="#">
-                <button class="ui left labeled icon button">
-                    <i class="left arrow icon"></i>
-                    Previous
-                </button>
-            </a>
-            {% endif %}
-            
-            {% if posts.has_next %}
-            <a class="page-link" href="?page={{posts.next_page_number}}">
-                <button class="ui right labeled icon button">
-                <i class="right arrow icon"></i>
-                Next
-                </button>
-            </a>
-                              
-            {% else %}
-            <a class="page-link" href="#">
-                <button class="ui right labeled icon button">
-                    <i class="right arrow icon"></i>
-                    Next
-                </button>
-            </a>                
-            {% endif %}
-        </nav>
+        </div>
+    {% empty %}
+        <h2>No posts.</h2>
+    {% endfor %}
     </div>
 </div>
+
 {% endblock %}
