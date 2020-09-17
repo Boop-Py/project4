@@ -8,18 +8,18 @@
 
     <div id="ui large feed">
         {% for post in posts %}
-        <div class="ui card">
-            <div class="event">
+        <div class="ui fluid card">
+            <div class="center aligned event">
                 <a class="user" href="{% url 'profile' post.user.username %}">
                 {{ post.user.username }}</a>               
                 {% if post.user_id == user.id %}       
                 <a href="#" class="right floated ui icon orange basic button" id="edit_post{{ post.id }}" data-id="{{ post.id }}" data-toggle="modal"><i class="edit icon"></i></a>
                 {% endif %}              
-                <h4 class="extra text" id="post_text_{{ post.id }}">{{ post.text }}</h4>             
-                <form action="#" method="POST" id="frm_edit_{{ post.id }}" data-id="{{ post.id }}" style="display: none">
+                <h3 class="text" id="post_text_{{ post.id }}">{{ post.text }}</h3>             
+                <form action="#" method="POST" id="edit_form{{ post.id }}" data-id="{{ post.id }}" style="display: none">
                     {% csrf_token %}
                     <div class="field">                
-                        {{ form_edit.id_post_edit_text }}
+                        {{ edit_form.id_post_edit_text }}
                     </div>
                     <div id="post_text_alert_{{ post.id }}"></div>
                     <div id="div_buttons">
@@ -29,7 +29,7 @@
                 </form>
                 <p class="date">{{ post.post_date }}</p>         
                 <div class="like heart" data-id="{{ post.id }}">     
-                    <i class="like icon"></i>{{ post.like_set.count }}
+                    <i class="like icon"></i> <span>{{ post.like_set.count }}</span>
                 </div> 
             </div>
         </div>

@@ -13,7 +13,8 @@ import time
 MAX_POSTS_PER_PAGE = 10
 
 ## TODO
-# click folo button does nothing
+# give the 'followers' on profile.html the same reload as the like function on index
+# tidy up the posts 
 
 
 class Create_Post_Form(forms.Form):
@@ -26,11 +27,11 @@ class Create_Post_Form(forms.Form):
                             required=True)
 
 class Edit_Post_Form(forms.Form):
-    id_post_edit_text = forms.Field(widget=forms.Textarea(
+    id_edit_text = forms.Field(widget=forms.Textarea(
                                     {"rows": "3", 
                                     "maxlength": 160, 
                                     "class": "field", 
-                                    "placeholder": "Write something...", 
+                                    "placeholder": "", 
                                     "id": "id_edit_text"}), 
                                     label="New Post", 
                                     required=True)
@@ -87,14 +88,14 @@ def create(request):
 
 def edit_post(request, id):
     if request.is_ajax and request.method == "POST":
-        form = NewEditPostForm(request.POST)
+        form = Edit_Post_Form(request.POST)
         if form.is_valid():
             text = form.cleaned_data["id_edit_text"]
             Post.objects.filter(
                                 id=id, 
                                 user_id=request.session["_auth_user_id"]).update(text=text)
             return JsonResponse({"result": "ok", 
-                                "text b": text})
+                                "text": text})
         else:
             return JsonResponse({"error": form.errors}, 
                                 status=400)
@@ -123,8 +124,8 @@ def follow(request, id):
             
         # count all the follows 
         following_target = Follower.objects.filter(following=target_user)
-        all_likes_on_post = following_target.count()      
-        print(f"total likes on this post: {all_likes_on_post}")
+        all_following_target = following_target.count()
+        print(f"total folos on this user: {all_following_target}")
         
     except Exception as e:
         print(e)
@@ -132,7 +133,7 @@ def follow(request, id):
         
     return JsonResponse({
                     "result": result, 
-                    "total_likes": all_likes_on_post
+                    "total_followers": all_following_target
     })
 
 def like(request, id):

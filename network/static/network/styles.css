@@ -6,3 +6,7 @@
 .hide {
     display: none;
 }
+
+.event {
+    padding: 20px;
+}

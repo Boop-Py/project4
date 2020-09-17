@@ -10,7 +10,7 @@
 </head>
 
 <body>
-    <div class="ui menu">
+    <div class="ui blue inverted menu">
         <a class="item" href="{% url 'index' %}"> Stronk </a>
         {% with request.resolver_match.url_name as url_name %}
         
@@ -32,15 +32,13 @@
             Log Out</a>
 
             {% else %}
-                <li class="item">
+            <div class="right menu">
                     <a class="item" href="{% url 'login' %}">Log In</a>
-                </li>
-                <li class="item">
                     <a class="item" href="{% url 'register' %}">Register</a>
-                </li>
             {% endif %}
             </div>
         {% endwith %}
+        </div>
     </div>
     
     <div class="body">
