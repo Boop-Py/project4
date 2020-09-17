@@ -16,21 +16,21 @@
                 {{ post.user.username }}</a>
                 
                 {% if post.user_id == user.id %}       
-                <a href="#" class="right floated ui icon orange basic button" id="edit_post{{ post.id }}" data-id="{{ post.id }}" data-toggle="modal"><i class="edit icon"></i></a>           
+                <a href="#" class="right floated ui icon blue basic button" id="edit_post{{ post.id }}" data-id="{{ post.id }}" data-toggle="modal"><i class="edit icon"></i></a>           
                 {% endif %}   
                 
                 <p class="extra text" id="post_content{{ post.id }}"> {{ post.text }}</p>
                 
-                <form action="#" method="POST" id="edit_form{{post.id}}" data-id="{{post.id}}" style="display: none">
+                <form action="#" method="POST" id="edit_form{{ post.id }}" data-id="{{ post.id }}" style="display: none">
                     {% csrf_token %}
                     <div class="field">
                         {{ form_edit.id_edit_text }}
                     </div>
-                    <div id="post_text_alert_{{post.id}}"></div>
+                    <div id="post_text_alert_{{ post.id }}"></div>
                     <div id="div_buttons">
-                        <button type="button" data-id="{{post.id}}" id="close_edit_button{{post.id}}" class="ui button"
-                            data-dismiss="modal">Close</button>
-                        <button type="submit" class="ui button" id="save_button">Save changes</button>
+                        <button type="button" data-id="{{ post.id }}" id="close_edit_button{{ post.id }}" class="ui red button"
+                            data-dismiss="modal"> Close </button>
+                        <button type="submit" class="ui blue button" id="save_button"> Save changes </button>
                     </div>
                 </form>
            

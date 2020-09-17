@@ -21,7 +21,7 @@ class Create_Post_Form(forms.Form):
     post_text = forms.Field(widget=forms.Textarea(
                             {"rows": "3", 
                             "maxlength": 160, 
-                            "class": "field", 
+                            "class": "ui field", 
                             "placeholder": "Write something..."}), 
                             label="New Post", 
                             required=True)
@@ -30,7 +30,7 @@ class Edit_Post_Form(forms.Form):
     id_edit_text = forms.Field(widget=forms.Textarea(
                                     {"rows": "3", 
                                     "maxlength": 160, 
-                                    "class": "field", 
+                                    "class": "ui field", 
                                     "placeholder": "", 
                                     "id": "id_edit_text"}), 
                                     label="New Post", 
