@@ -13,7 +13,7 @@ import time
 MAX_POSTS_PER_PAGE = 10
 
 ## TODO
-# give the 'followers' on profile.html the same reload as the like function on index
+# input box not hiding
 # tidy up the posts 
 
 

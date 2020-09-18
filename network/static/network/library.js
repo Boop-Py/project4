@@ -47,13 +47,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .then(response => response.json())
                 .then(data => {
-
                     alert_message(data, alert, this.dataset.id);
-                    this.querySelector('#div_buttons').style.display = "";
+                    this.querySelector('#div_buttons').style.display = 'none';
+                    form.style.display = 'none'; 
+                    document.querySelector('#post_content' + this.dataset.id).innerHTML = data.text;
+                    
                 }).catch((error) => {
-                    alert_message({
-                        'error': error.message
-                    }, alert, this.dataset.id);
+                    console.log(error)
+
                     this.querySelector('#div_buttons').style.display = "";
                 });
         }
@@ -68,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
             last_form = this;
             let p = document.querySelector('#post_content' + this.dataset.id);
             let form = document.querySelector('#edit_form' + this.dataset.id);
+            document.querySelector('#div_buttons').style.display = 'block';
             p.style.display = 'none';
             form.querySelector('#id_edit_text').value = p.innerHTML;
             form.style.display = '';
@@ -136,7 +138,8 @@ document.addEventListener('DOMContentLoaded', function () {
     } 
     
     // show alert
-    function alert_messages(data, alert, id) {
+    function alert_message(data, alert, id) {
+        console.log("Do I  get here?");
         let div = document.createElement('div');
         let sucess = false;
         div.setAttribute('role', 'alert');
